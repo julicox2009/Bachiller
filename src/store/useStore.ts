@@ -151,7 +151,7 @@ export const useStore = create<StoreState>()(
       },
     }),
     {
-      name: 'academic-manager-storage',
+      name: 'bachiller-manager-storage',
     }
   )
 );

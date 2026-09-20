@@ -28,7 +28,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
         <h1 className="text-lg font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-          AcademicManager
+          BachillerManager
         </h1>
         <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
           {darkMode ? '☀️' : '🌙'}
@@ -38,13 +38,16 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
       {/* Sidebar - Desktop */}
       <aside className={`hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r z-40`}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
-            <BookOpen size={24} className="text-blue-500" />
-            AcademicManager
-          </h1>
-        </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
+              <BookOpen size={24} className="text-blue-500" />
+              BachillerManager
+            </h1>
+            <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              Asistente académico de Jesús
+            </p>
+          </div>      </div>
+      <nav className="flex-1 p-4 space-y-1">          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
@@ -79,7 +82,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
           <aside className={`absolute left-0 top-0 bottom-0 w-72 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-2xl`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                AcademicManager
+                BachillerManager
               </h1>
               <button onClick={() => setSidebarOpen(false)} className="p-2">
                 <X size={20} />

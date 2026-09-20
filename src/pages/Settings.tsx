@@ -41,7 +41,7 @@ export default function Settings() {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        new Notification('AcademicManager', {
+        new Notification('BachillerManager', {
           body: '¡Notificaciones activadas! Te avisaremos antes de tus clases y exámenes.',
           icon: '/favicon.ico',
         });
@@ -189,7 +189,8 @@ export default function Settings() {
           Acerca de
         </h3>
         <div className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          <p><strong>AcademicManager</strong> v1.0.0</p>
+          <p><strong>BachillerManager</strong> v1.0.0</p>
+          <p className="italic">Asistente de gestión académica de Jesús</p>
           <p>Aplicación de gestión académica 100% offline.</p>
           <p>Todos los datos se almacenan localmente en tu dispositivo.</p>
           <p className="mt-4">

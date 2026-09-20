@@ -22,10 +22,13 @@ export default function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
       <h2 className="text-3xl lg:text-4xl font-bold mb-3">
         ¡Bienvenido a{' '}
         <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-          AcademicManager
+          BachillerManager
         </span>
         !
       </h2>
+      <p className={`text-sm italic max-w-md mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+        Asistente de gestión académica de Jesús
+      </p>
       <p className={`text-lg max-w-md mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         Tu asistente de gestión académica. Comienza agregando tus asignaturas para organizar tu horario y exámenes.
       </p>

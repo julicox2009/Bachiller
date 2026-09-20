@@ -1,4 +1,6 @@
-# 📚 AcademicManager - Gestión Académica
+# 📚 BachillerManager
+
+### Asistente de gestión académica de Jesús
 
 Aplicación web multiplataforma de gestión académica que funciona 100% offline. Diseñada para ejecutarse en dispositivos móviles Android y ordenadores PC (Windows/Linux/macOS).
 
@@ -148,7 +150,7 @@ npx electron .
 
 ## 💾 Persistencia de Datos
 
-Los datos se almacenan en `localStorage` del navegador bajo la clave `academic-manager-storage`.
+Los datos se almacenan en `localStorage` del navegador bajo la clave `bachiller-manager-storage`.
 
 ### Exportar datos
 Desde Ajustes → "Exportar datos" se genera un archivo JSON con toda la información.
