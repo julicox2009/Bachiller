@@ -6,6 +6,7 @@ import { DAYS, DAYS_SHORT, TIME_SLOTS, ClassSession } from '../types';
 export default function Schedule() {
   const { subjects, classes, addClass, updateClass, deleteClass, darkMode } = useStore();
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingClass, setEditingClass] = useState<ClassSession | null>(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const day = new Date().getDay();
@@ -176,7 +177,10 @@ export default function Schedule() {
                                   <Edit2 size={10} />
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); deleteClass(session.id); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteConfirm(session.id);
+                                  }}
                                   className="p-1 bg-red-500 text-white rounded shadow"
                                 >
                                   <Trash2 size={10} />
@@ -366,7 +370,10 @@ export default function Schedule() {
                 {editingClass && (
                   <button
                     type="button"
-                    onClick={() => { deleteClass(editingClass.id); setShowModal(false); }}
+                    onClick={() => {
+                      setShowModal(false);
+                      setShowDeleteConfirm(editingClass.id);
+                    }}
                     className="px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
                   >
                     Eliminar
@@ -380,6 +387,65 @@ export default function Schedule() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
+          <div className={`relative w-full max-w-md ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-6 animate-fadeIn`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">¿Eliminar clase?</h3>
+                <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Esta acción no se puede deshacer
+                </p>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl mb-6 ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+              {(() => {
+                const cls = classes.find(c => c.id === showDeleteConfirm);
+                const subject = cls ? subjects.find(s => s.id === cls.subjectId) : null;
+                if (!cls || !subject) return null;
+                return (
+                  <>
+                    <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Se eliminará la clase de <strong style={{ color: subject.color }}>{subject.name}</strong>:
+                    </p>
+                    <ul className={`text-sm mt-2 space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <li>• {DAYS[cls.dayOfWeek]} de {cls.startTime} a {cls.endTime}</li>
+                      <li>• Aula: {cls.room}</li>
+                    </ul>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
+                  darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deleteClass(showDeleteConfirm);
+                  setShowDeleteConfirm(null);
+                }}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"
+              >
+                Sí, eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}

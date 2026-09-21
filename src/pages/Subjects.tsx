@@ -6,6 +6,7 @@ import { SUBJECT_COLORS, Subject } from '../types';
 export default function Subjects() {
   const { subjects, addSubject, updateSubject, deleteSubject, darkMode } = useStore();
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [form, setForm] = useState({ name: '', color: SUBJECT_COLORS[0], professor: '' });
 
@@ -87,16 +88,18 @@ export default function Subjects() {
                 </div>
                 <div className="flex gap-1">
                   <button
-                    onClick={() => openEditModal(subject)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(subject);
+                    }}
                     className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
                   >
                     <Edit2 size={14} />
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm('¿Eliminar esta asignatura? Se eliminarán también sus clases y exámenes.')) {
-                        deleteSubject(subject.id);
-                      }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(subject.id);
                     }}
                     className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors"
                   >
@@ -167,7 +170,10 @@ export default function Subjects() {
                 {editingSubject && (
                   <button
                     type="button"
-                    onClick={() => { deleteSubject(editingSubject.id); setShowModal(false); }}
+                    onClick={() => {
+                      setShowModal(false);
+                      setShowDeleteConfirm(editingSubject.id);
+                    }}
                     className="px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
                   >
                     Eliminar
@@ -181,6 +187,57 @@ export default function Subjects() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
+          <div className={`relative w-full max-w-md ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-6 animate-fadeIn`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">¿Eliminar asignatura?</h3>
+                <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Esta acción no se puede deshacer
+                </p>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl mb-6 ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Se eliminará la asignatura <strong>{subjects.find(s => s.id === showDeleteConfirm)?.name}</strong> y también:
+              </p>
+              <ul className={`text-sm mt-2 space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <li>• Todas las clases asociadas</li>
+                <li>• Todos los exámenes programados</li>
+                <li>• Todos los temas de estudio</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
+                  darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deleteSubject(showDeleteConfirm);
+                  setShowDeleteConfirm(null);
+                }}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"
+              >
+                Sí, eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}
