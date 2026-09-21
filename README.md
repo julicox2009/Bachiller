@@ -165,6 +165,27 @@ La app usa la API de Notificaciones del navegador:
 - **Exámenes**: Aviso 24h antes (todos) y 48h antes (urgentes)
 - Requiere que la pestaña esté abierta para funcionar
 
+## 📤 Subir a GitHub
+
+Para subir este proyecto a tu repositorio de GitHub, consulta la guía completa en:
+👉 **[Guía de configuración de GitHub](/public/GITHUB_SETUP.md)**
+
+### Resumen rápido:
+```bash
+# 1. Crear repositorio en GitHub (github.com/new)
+# 2. En tu terminal:
+git init
+git add .
+git commit -m "🎉 Versión inicial de BachillerManager"
+git remote add origin https://github.com/TU-USUARIO/bachiller-manager.git
+git branch -M main
+git push -u origin main
+```
+
 ## 📄 Licencia
 
 MIT
+
+---
+
+**Desarrollado con ❤️ para Jesús**
