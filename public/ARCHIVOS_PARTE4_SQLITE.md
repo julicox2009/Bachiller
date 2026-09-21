@@ -1,3 +1,154 @@
+# 📦 PARTE 4: Archivos SQLite (database.ts y useStore.ts)
+
+---
+
+## 📄 ARCHIVO 8: `src/services/database.ts`
+
+```typescript
+import initSqlJs, { Database } from 'sql.js';
+
+let db: Database | null = null;
+const DB_NAME = 'bachiller_manager_db';
+
+export async function initDatabase(): Promise<void> {
+  try {
+    const SQL = await initSqlJs({
+      locateFile: file => `https://sql.js.org/dist/${file}`
+    });
+
+    const savedDb = localStorage.getItem(DB_NAME);
+    
+    if (savedDb) {
+      const binary = atob(savedDb);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      db = new SQL.Database(bytes);
+    } else {
+      db = new SQL.Database();
+      createTables();
+    }
+
+    console.log('✅ SQLite inicializado correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando SQLite:', error);
+    throw error;
+  }
+}
+
+function createTables(): void {
+  if (!db) return;
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL,
+      professor TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS class_sessions (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      day_of_week INTEGER NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      room TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS exams (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      room TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      notes TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS exam_topics (
+      id TEXT PRIMARY KEY,
+      exam_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE
+    )
+  `);
+
+  saveDatabase();
+}
+
+export function saveDatabase(): void {
+  if (!db) return;
+  
+  const data = db.export();
+  let binary = '';
+  const bytes = new Uint8Array(data);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  localStorage.setItem(DB_NAME, base64);
+}
+
+export function getDatabase(): Database {
+  if (!db) {
+    throw new Error('Base de datos no inicializada. Llama a initDatabase() primero.');
+  }
+  return db;
+}
+
+export function runQuery(sql: string, params: any[] = []): void {
+  const db = getDatabase();
+  db.run(sql, params);
+  saveDatabase();
+}
+
+export function getResults(sql: string, params: any[] = []): any[] {
+  const db = getDatabase();
+  const stmt = db.prepare(sql);
+  stmt.bind(params);
+  
+  const results = [];
+  while (stmt.step()) {
+    results.push(stmt.getAsObject());
+  }
+  stmt.free();
+  
+  return results;
+}
+
+export function closeDatabase(): void {
+  if (db) {
+    saveDatabase();
+    db.close();
+    db = null;
+  }
+}
+```
+
+---
+
+## 📄 ARCHIVO 9: `src/store/useStore.ts`
+
+```typescript
 import { create } from 'zustand';
 import { Subject, ClassSession, Exam, ExamTopic } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,17 +160,14 @@ interface StoreState {
   exams: Exam[];
   darkMode: boolean;
 
-  // Subject actions
   addSubject: (name: string, color: string, professor: string) => void;
   updateSubject: (id: string, data: Partial<Subject>) => void;
   deleteSubject: (id: string) => void;
 
-  // Class actions
   addClass: (cls: Omit<ClassSession, 'id'>) => void;
   updateClass: (id: string, data: Partial<ClassSession>) => void;
   deleteClass: (id: string) => void;
 
-  // Exam actions
   addExam: (exam: Omit<Exam, 'id'>) => void;
   updateExam: (id: string, data: Partial<Exam>) => void;
   deleteExam: (id: string) => void;
@@ -27,14 +175,11 @@ interface StoreState {
   addTopic: (examId: string, topicName: string) => void;
   deleteTopic: (examId: string, topicId: string) => void;
 
-  // Settings
   toggleDarkMode: () => void;
 
-  // Import/Export
   exportData: () => string;
   importData: (json: string) => boolean;
 
-  // Load from SQLite
   loadFromDatabase: () => void;
 }
 
@@ -44,14 +189,12 @@ export const useStore = create<StoreState>()((set, get) => ({
   exams: [],
   darkMode: false,
 
-  // Cargar datos desde SQLite
   loadFromDatabase: () => {
     try {
       const subjects = getResults('SELECT * FROM subjects') as Subject[];
       const classes = getResults('SELECT * FROM class_sessions') as ClassSession[];
       const examsRaw = getResults('SELECT * FROM exams') as any[];
       
-      // Cargar exámenes con sus topics
       const exams: Exam[] = examsRaw.map(exam => {
         const topics = getResults(
           'SELECT * FROM exam_topics WHERE exam_id = ?',
@@ -64,7 +207,6 @@ export const useStore = create<StoreState>()((set, get) => ({
         };
       });
 
-      // Cargar darkMode desde localStorage
       const darkMode = localStorage.getItem('darkMode') === 'true';
 
       set({ subjects, classes, exams, darkMode });
@@ -74,7 +216,6 @@ export const useStore = create<StoreState>()((set, get) => ({
     }
   },
 
-  // Subject actions
   addSubject: (name, color, professor) => {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -105,7 +246,6 @@ export const useStore = create<StoreState>()((set, get) => ({
   },
 
   deleteSubject: (id) => {
-    // SQLite con CASCADE eliminará automáticamente las clases y exámenes relacionados
     runQuery('DELETE FROM subjects WHERE id = ?', [id]);
 
     set((state) => ({
@@ -115,7 +255,6 @@ export const useStore = create<StoreState>()((set, get) => ({
     }));
   },
 
-  // Class actions
   addClass: (cls) => {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -159,7 +298,6 @@ export const useStore = create<StoreState>()((set, get) => ({
     }));
   },
 
-  // Exam actions
   addExam: (exam) => {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -169,7 +307,6 @@ export const useStore = create<StoreState>()((set, get) => ({
       [id, exam.subjectId, exam.date, exam.time, exam.room, exam.priority, exam.notes, now, now]
     );
 
-    // Insertar topics
     exam.topics.forEach(topic => {
       const topicId = uuidv4();
       runQuery(
@@ -202,7 +339,6 @@ export const useStore = create<StoreState>()((set, get) => ({
       );
     }
 
-    // Actualizar topics si se proporcionan
     if (data.topics) {
       runQuery('DELETE FROM exam_topics WHERE exam_id = ?', [id]);
       data.topics.forEach(topic => {
@@ -220,7 +356,6 @@ export const useStore = create<StoreState>()((set, get) => ({
   },
 
   deleteExam: (id) => {
-    // SQLite con CASCADE eliminará automáticamente los topics
     runQuery('DELETE FROM exams WHERE id = ?', [id]);
 
     set((state) => ({
@@ -281,14 +416,12 @@ export const useStore = create<StoreState>()((set, get) => ({
     }));
   },
 
-  // Settings
   toggleDarkMode: () => {
     const newDarkMode = !get().darkMode;
     localStorage.setItem('darkMode', String(newDarkMode));
     set((state) => ({ darkMode: newDarkMode }));
   },
 
-  // Import/Export
   exportData: () => {
     const { subjects, classes, exams } = get();
     return JSON.stringify({ subjects, classes, exams, exportedAt: new Date().toISOString() }, null, 2);
@@ -298,13 +431,11 @@ export const useStore = create<StoreState>()((set, get) => ({
     try {
       const data = JSON.parse(json);
       if (data.subjects && data.classes && data.exams) {
-        // Limpiar base de datos
         runQuery('DELETE FROM exam_topics');
         runQuery('DELETE FROM exams');
         runQuery('DELETE FROM class_sessions');
         runQuery('DELETE FROM subjects');
 
-        // Insertar nuevos datos
         const now = new Date().toISOString();
         
         data.subjects.forEach((s: any) => {
@@ -335,7 +466,6 @@ export const useStore = create<StoreState>()((set, get) => ({
           });
         });
 
-        // Recargar estado
         get().loadFromDatabase();
         return true;
       }
@@ -345,3 +475,8 @@ export const useStore = create<StoreState>()((set, get) => ({
     }
   },
 }));
+```
+
+---
+
+**Continúa en PARTE 5 con los componentes...**

@@ -1,3 +1,10 @@
+# 📦 PARTE 3: Archivos Críticos (SQLite)
+
+---
+
+## 📄 ARCHIVO 7: `src/App.tsx`
+
+```typescript
 import { useState, useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { initDatabase } from './services/database';
@@ -23,7 +30,7 @@ function App() {
       })
       .catch((error) => {
         console.error('Error inicializando base de datos:', error);
-        setDbReady(true); // Continuar aunque falle
+        setDbReady(true);
       });
   }, []);
 
@@ -35,7 +42,7 @@ function App() {
     }
   }, [darkMode]);
 
-  // Schedule notifications
+  // Notificaciones
   useEffect(() => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
@@ -46,7 +53,6 @@ function App() {
       if (todayDay === 0 || todayDay === 6) return;
       const dayOfWeek = todayDay - 1;
 
-      // Check class reminders (15 min before)
       classes
         .filter((c) => c.dayOfWeek === dayOfWeek)
         .forEach((cls) => {
@@ -65,7 +71,6 @@ function App() {
           }
         });
 
-      // Check exam reminders (24h and 48h before)
       exams.forEach((exam) => {
         const subject = subs.find((s) => s.id === exam.subjectId);
         if (!subject) return;
@@ -88,7 +93,6 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Mostrar pantalla de carga mientras se inicializa SQLite
   if (!dbReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
@@ -102,7 +106,6 @@ function App() {
   }
 
   const renderPage = () => {
-    // Show welcome screen if no subjects and on dashboard
     if (subjects.length === 0 && currentPage === 'dashboard') {
       return <WelcomeScreen onNavigate={setCurrentPage} />;
     }
@@ -125,3 +128,8 @@ function App() {
 }
 
 export default App;
+```
+
+---
+
+**Continúa en PARTE 4 con database.ts y useStore.ts...**
