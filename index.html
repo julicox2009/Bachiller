@@ -6,12 +6,6 @@
     <title>BachillerManager - Asistente de gestión académica de Jesús</title>
     <meta name="description" content="BachillerManager: Asistente de gestión académica de Jesús. Horario, exámenes y dashboard offline." />
     <meta name="theme-color" content="#3B82F6" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%233B82F6'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white'>📚</text></svg>" />
-    <link rel="manifest" href="/manifest.json" />
     <style>
       html, body, #root {
         margin: 0;
@@ -29,19 +23,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Registrar Service Worker para funcionalidad offline
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('✅ Service Worker registrado:', registration.scope);
-            })
-            .catch((error) => {
-              console.log('❌ Error al registrar Service Worker:', error);
-            });
-        });
-      }
-    </script>
   </body>
 </html>

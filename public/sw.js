@@ -4,8 +4,7 @@
 const CACHE_NAME = 'bachiller-manager-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/manifest.json'
+  '/index.html'
 ];
 
 // Instalar el Service Worker
@@ -16,7 +15,11 @@ self.addEventListener('install', (event) => {
         console.log('Cache abierto');
         return cache.addAll(urlsToCache);
       })
+      .catch((err) => {
+        console.log('Error al abrir cache:', err);
+      })
   );
+  self.skipWaiting();
 });
 
 // Activar el Service Worker
@@ -33,62 +36,80 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });
 
-// Interceptar peticiones
+// Interceptar peticiones - estrategia Network First con fallback a Cache
 self.addEventListener('fetch', (event) => {
+  // Solo manejar peticiones GET
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Si está en cache, devolverlo
-        if (response) {
-          return response;
-        }
-
-        // Si no está en cache, hacer la petición
-        return fetch(event.request).then((response) => {
-          // Verificar si la respuesta es válida
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clonar la respuesta
+        // Si la respuesta es válida, guardar en cache
+        if (response && response.status === 200) {
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
             });
-
-          return response;
-        });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Si falla la red, intentar desde cache
+        return caches.match(event.request)
+          .then((response) => {
+            return response || new Response('Offline', { status: 503 });
+          });
       })
   );
 });
 
 // Notificaciones push (opcional)
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'BachillerManager';
+  let data = { title: 'BachillerManager', body: 'Tienes una notificación' };
+  
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
   const options = {
-    body: data.body || 'Tienes una notificación',
-    icon: '/manifest-icon-192.png',
-    badge: '/manifest-icon-192.png',
+    body: data.body,
+    icon: data.icon || '/',
+    badge: data.badge || '/',
     vibrate: [200, 100, 200],
-    data: {
+     {
       url: data.url || '/'
     }
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.registration.showNotification(data.title, options)
   );
 });
 
 // Click en notificación
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const urlToOpen = (event.notification.data && event.notification.data.url) || '/';
+  
   event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
   );
 });
