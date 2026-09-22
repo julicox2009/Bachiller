@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
-import { Clock, Calendar, AlertTriangle, CheckCircle2, BookOpen } from 'lucide-react';
+import { Clock, Calendar, AlertTriangle, CheckCircle2, BookOpen, Target, Zap } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { DAYS, PRIORITY_CONFIG } from '../types';
+import { DAYS, PRIORITY_CONFIG, ASSIGNMENT_TYPES } from '../types';
 import { format, differenceInDays, parseISO, isToday, isTomorrow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import FocusMode from '../components/FocusMode';
 
 export default function Dashboard() {
-  const { subjects, classes, exams, darkMode } = useStore();
+  const { subjects, classes, exams, assignments, darkMode, completedToday, streak } = useStore();
 
   const todayDayOfWeek = useMemo(() => {
     const day = new Date().getDay();
@@ -43,6 +44,48 @@ export default function Dashboard() {
 
   const cardClass = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
 
+  // TDAH: ¿Qué hago ahora? - Priorizar tareas urgentes
+  const whatToDoNow = useMemo(() => {
+    const now = new Date();
+    const items: Array<{ type: 'exam' | 'assignment'; title: string; subtitle: string; urgency: number; color: string; emoji: string }> = [];
+    
+    // Exámenes próximos
+    upcomingExams.forEach(exam => {
+      if (exam.daysLeft <= 7) {
+        items.push({
+          type: 'exam',
+          title: `Estudiar para ${exam.subject!.name}`,
+          subtitle: `Examen en ${exam.daysLeft} día${exam.daysLeft !== 1 ? 's' : ''}`,
+          urgency: 100 - (exam.daysLeft * 10) + (exam.priority === 'urgent' ? 30 : exam.priority === 'high' ? 20 : 0),
+          color: exam.subject!.color,
+          emoji: '📝',
+        });
+      }
+    });
+    
+    // Trabajos pendientes
+    assignments
+      .filter(a => !a.completed)
+      .forEach(assignment => {
+        const daysLeft = differenceInDays(parseISO(assignment.dueDate), now);
+        if (daysLeft <= 7) {
+          const subject = subjects.find(s => s.id === assignment.subjectId);
+          items.push({
+            type: 'assignment',
+            title: assignment.title,
+            subtitle: daysLeft < 0 ? `Vencido hace ${Math.abs(daysLeft)} días` :
+                      daysLeft === 0 ? '¡Entregar hoy!' :
+                      `Entregar en ${daysLeft} día${daysLeft !== 1 ? 's' : ''}`,
+            urgency: 100 - (daysLeft * 10) + (assignment.priority === 'urgent' ? 30 : assignment.priority === 'high' ? 20 : 0),
+            color: subject?.color || '#3B82F6',
+            emoji: ASSIGNMENT_TYPES[assignment.type].emoji,
+          });
+        }
+      });
+    
+    return items.sort((a, b) => b.urgency - a.urgency).slice(0, 3);
+  }, [upcomingExams, assignments, subjects]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,6 +93,66 @@ export default function Dashboard() {
         <p className={`mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
         </p>
+      </div>
+
+      {/* TDAH: ¿Qué hago ahora? */}
+      {whatToDoNow.length > 0 && (
+        <div className={`${cardClass} border-2 border-purple-500/30 rounded-2xl p-6 bg-gradient-to-br ${darkMode ? 'from-purple-500/5 to-blue-500/5' : 'from-purple-50 to-blue-50'}`}>
+          <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+            <Target size={20} className="text-purple-500" />
+            ¿Qué hago ahora?
+            <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${darkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-600'}`}>
+              TDAH Friendly
+            </span>
+          </h3>
+          <div className="space-y-3">
+            {whatToDoNow.map((item, index) => (
+              <div
+                key={index}
+                className={`flex items-center gap-4 p-4 rounded-xl border-l-4 ${darkMode ? 'bg-gray-700/50' : 'bg-white'}`}
+                style={{ borderLeftColor: item.color }}
+              >
+                <span className="text-2xl">{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold truncate">{item.title}</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{item.subtitle}</p>
+                </div>
+                {index === 0 && (
+                  <span className="flex items-center gap-1 px-3 py-1 bg-orange-500/10 text-orange-500 rounded-full text-xs font-bold">
+                    <Zap size={12} />
+                    PRIORIDAD
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TDAH: Rachas y logros */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className={`${cardClass} border rounded-2xl p-4`}>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-500/10 rounded-xl">
+              <span className="text-xl">🔥</span>
+            </div>
+            <div>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Racha</p>
+              <p className="text-2xl font-bold">{streak} días</p>
+            </div>
+          </div>
+        </div>
+        <div className={`${cardClass} border rounded-2xl p-4`}>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-xl">
+              <span className="text-xl">⭐</span>
+            </div>
+            <div>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Hoy</p>
+              <p className="text-2xl font-bold">{completedToday}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -195,6 +298,9 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* TDAH: Modo Enfoque - Pomodoro */}
+      <FocusMode />
     </div>
   );
 }

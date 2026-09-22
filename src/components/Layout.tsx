@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Calendar, Clock, Settings, Menu, X, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Calendar, Clock, Settings, Menu, X, BookOpen, ClipboardList } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 interface LayoutProps {
@@ -12,6 +12,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'schedule', label: 'Horario', icon: Clock },
   { id: 'exams', label: 'Exámenes', icon: Calendar },
+  { id: 'assignments', label: 'Trabajos', icon: ClipboardList },
   { id: 'subjects', label: 'Asignaturas', icon: BookOpen },
   { id: 'settings', label: 'Ajustes', icon: Settings },
 ];

@@ -84,6 +84,38 @@ function createTables(): void {
     )
   `);
 
+  // NUEVA TABLA: assignments (trabajos/tareas)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS assignments (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      due_date TEXT NOT NULL,
+      due_time TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'homework',
+      priority TEXT NOT NULL DEFAULT 'medium',
+      completed INTEGER NOT NULL DEFAULT 0,
+      notes TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+    )
+  `);
+
+  // NUEVA TABLA: assignment_steps (pasos de cada trabajo)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS assignment_steps (
+      id TEXT PRIMARY KEY,
+      assignment_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE
+    )
+  `);
+
   saveDatabase();
 }
 

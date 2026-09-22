@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Subject, ClassSession, Exam, ExamTopic } from '../types';
+import { Subject, ClassSession, Exam, ExamTopic, Assignment, AssignmentStep } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getResults } from '../services/database';
 
@@ -7,7 +7,16 @@ interface StoreState {
   subjects: Subject[];
   classes: ClassSession[];
   exams: Exam[];
+  assignments: Assignment[];
   darkMode: boolean;
+  
+  // TDAH Focus Mode
+  currentFocusTask: string | null;
+  setCurrentFocusTask: (taskId: string | null) => void;
+  pomodoroMinutes: number;
+  setPomodoroMinutes: (minutes: number) => void;
+  completedToday: number;
+  streak: number;
 
   // Subject actions
   addSubject: (name: string, color: string, professor: string) => void;
@@ -26,10 +35,18 @@ interface StoreState {
   toggleTopic: (examId: string, topicId: string) => void;
   addTopic: (examId: string, topicName: string) => void;
   deleteTopic: (examId: string, topicId: string) => void;
-
+  
+  // Assignment actions (NUEVO - Trabajos/Tareas)
+  addAssignment: (assignment: Omit<Assignment, 'id'>) => void;
+  updateAssignment: (id: string, data: Partial<Assignment>) => void;
+  deleteAssignment: (id: string) => void;
+  toggleAssignment: (id: string) => void;
+  toggleAssignmentStep: (assignmentId: string, stepId: string) => void;
+  addAssignmentStep: (assignmentId: string, stepName: string) => void;
+  deleteAssignmentStep: (assignmentId: string, stepId: string) => void;
+  
   // Settings
   toggleDarkMode: () => void;
-
   // Import/Export
   exportData: () => string;
   importData: (json: string) => boolean;
@@ -42,7 +59,16 @@ export const useStore = create<StoreState>()((set, get) => ({
   subjects: [],
   classes: [],
   exams: [],
+  assignments: [],
   darkMode: false,
+  
+  // TDAH Focus Mode
+  currentFocusTask: null,
+  setCurrentFocusTask: (taskId) => set({ currentFocusTask: taskId }),
+  pomodoroMinutes: 25,
+  setPomodoroMinutes: (minutes) => set({ pomodoroMinutes: minutes }),
+  completedToday: Number(localStorage.getItem('completedToday') || 0),
+  streak: Number(localStorage.getItem('streak') || 0),
 
   // Cargar datos desde SQLite
   loadFromDatabase: () => {
@@ -50,6 +76,7 @@ export const useStore = create<StoreState>()((set, get) => ({
       const subjects = getResults('SELECT * FROM subjects') as Subject[];
       const classes = getResults('SELECT * FROM class_sessions') as ClassSession[];
       const examsRaw = getResults('SELECT * FROM exams') as any[];
+      const assignmentsRaw = getResults('SELECT * FROM assignments') as any[];
       
       // Cargar exámenes con sus topics
       const exams: Exam[] = examsRaw.map(exam => {
@@ -64,10 +91,24 @@ export const useStore = create<StoreState>()((set, get) => ({
         };
       });
 
+      // Cargar trabajos con sus steps
+      const assignments: Assignment[] = assignmentsRaw.map(assignment => {
+        const steps = getResults(
+          'SELECT * FROM assignment_steps WHERE assignment_id = ?',
+          [assignment.id]
+        ) as AssignmentStep[];
+        
+        return {
+          ...assignment,
+          steps: steps.map(s => ({ ...s, completed: Boolean(s.completed) })),
+          completed: Boolean(assignment.completed)
+        };
+      });
+
       // Cargar darkMode desde localStorage
       const darkMode = localStorage.getItem('darkMode') === 'true';
 
-      set({ subjects, classes, exams, darkMode });
+      set({ subjects, classes, exams, assignments, darkMode });
       console.log('✅ Datos cargados desde SQLite');
     } catch (error) {
       console.error('❌ Error cargando datos desde SQLite:', error);
@@ -281,6 +322,154 @@ export const useStore = create<StoreState>()((set, get) => ({
     }));
   },
 
+  // Assignment actions (NUEVO - Trabajos/Tareas)
+  addAssignment: (assignment) => {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    runQuery(
+      'INSERT INTO assignments (id, subject_id, title, description, due_date, due_time, type, priority, completed, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)',
+      [id, assignment.subjectId, assignment.title, assignment.description, assignment.dueDate, assignment.dueTime, assignment.type, assignment.priority, assignment.notes, now, now]
+    );
+
+    assignment.steps.forEach(step => {
+      const stepId = uuidv4();
+      runQuery(
+        'INSERT INTO assignment_steps (id, assignment_id, name, completed, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?)',
+        [stepId, id, step.name, now, now]
+      );
+    });
+
+    set((state) => ({
+      assignments: [...state.assignments, { ...assignment, id, completed: false }],
+    }));
+  },
+
+  updateAssignment: (id, data) => {
+    const now = new Date().toISOString();
+    const fields = Object.keys(data)
+      .filter(key => key !== 'steps' && key !== 'completed')
+      .map(key => {
+        const dbKey = key === 'subjectId' ? 'subject_id' : 
+                      key === 'dueDate' ? 'due_date' : 
+                      key === 'dueTime' ? 'due_time' : key;
+        return `${dbKey} = ?`;
+      }).join(', ');
+    const values = Object.entries(data)
+      .filter(([key]) => key !== 'steps' && key !== 'completed')
+      .map(([, value]) => value);
+    
+    if (fields) {
+      runQuery(
+        `UPDATE assignments SET ${fields}, updated_at = ? WHERE id = ?`,
+        [...values, now, id]
+      );
+    }
+
+    if (data.steps) {
+      runQuery('DELETE FROM assignment_steps WHERE assignment_id = ?', [id]);
+      data.steps.forEach(step => {
+        const stepId = step.id || uuidv4();
+        runQuery(
+          'INSERT INTO assignment_steps (id, assignment_id, name, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [stepId, id, step.name, step.completed ? 1 : 0, now, now]
+        );
+      });
+    }
+
+    set((state) => ({
+      assignments: state.assignments.map((a) => (a.id === id ? { ...a, ...data } : a)),
+    }));
+  },
+
+  deleteAssignment: (id) => {
+    runQuery('DELETE FROM assignments WHERE id = ?', [id]);
+
+    set((state) => ({
+      assignments: state.assignments.filter((a) => a.id !== id),
+    }));
+  },
+
+  toggleAssignment: (id) => {
+    const assignment = get().assignments.find(a => a.id === id);
+    if (!assignment) return;
+    
+    const newCompleted = !assignment.completed;
+    const now = new Date().toISOString();
+    
+    runQuery(
+      'UPDATE assignments SET completed = ?, updated_at = ? WHERE id = ?',
+      [newCompleted ? 1 : 0, now, id]
+    );
+
+    // Actualizar contador TDAH
+    if (newCompleted) {
+      const completedToday = get().completedToday + 1;
+      localStorage.setItem('completedToday', String(completedToday));
+      localStorage.setItem('lastCompletedDate', new Date().toDateString());
+      set({ completedToday });
+    }
+
+    set((state) => ({
+      assignments: state.assignments.map((a) => 
+        a.id === id ? { ...a, completed: newCompleted } : a
+      ),
+    }));
+  },
+
+  toggleAssignmentStep: (assignmentId, stepId) => {
+    runQuery(
+      'UPDATE assignment_steps SET completed = 1 - completed, updated_at = ? WHERE id = ?',
+      [new Date().toISOString(), stepId]
+    );
+
+    set((state) => ({
+      assignments: state.assignments.map((a) =>
+        a.id === assignmentId
+          ? {
+              ...a,
+              steps: a.steps.map((s) =>
+                s.id === stepId ? { ...s, completed: !s.completed } : s
+              ),
+            }
+          : a
+      ),
+    }));
+  },
+
+  addAssignmentStep: (assignmentId, stepName) => {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    runQuery(
+      'INSERT INTO assignment_steps (id, assignment_id, name, completed, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?)',
+      [id, assignmentId, stepName, now, now]
+    );
+
+    set((state) => ({
+      assignments: state.assignments.map((a) =>
+        a.id === assignmentId
+          ? {
+              ...a,
+              steps: [...a.steps, { id, name: stepName, completed: false }],
+            }
+          : a
+      ),
+    }));
+  },
+
+  deleteAssignmentStep: (assignmentId, stepId) => {
+    runQuery('DELETE FROM assignment_steps WHERE id = ?', [stepId]);
+
+    set((state) => ({
+      assignments: state.assignments.map((a) =>
+        a.id === assignmentId
+          ? { ...a, steps: a.steps.filter((s) => s.id !== stepId) }
+          : a
+      ),
+    }));
+  },
+
   // Settings
   toggleDarkMode: () => {
     const newDarkMode = !get().darkMode;
@@ -290,8 +479,8 @@ export const useStore = create<StoreState>()((set, get) => ({
 
   // Import/Export
   exportData: () => {
-    const { subjects, classes, exams } = get();
-    return JSON.stringify({ subjects, classes, exams, exportedAt: new Date().toISOString() }, null, 2);
+    const { subjects, classes, exams, assignments } = get();
+    return JSON.stringify({ subjects, classes, exams, assignments, exportedAt: new Date().toISOString() }, null, 2);
   },
 
   importData: (json) => {

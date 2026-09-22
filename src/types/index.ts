@@ -31,10 +31,41 @@ export interface ExamTopic {
   completed: boolean;
 }
 
+// NUEVO: Trabajos / Tareas a entregar
+export interface Assignment {
+  id: string;
+  subjectId: string;
+  title: string;
+  description: string;
+  dueDate: string; // YYYY-MM-DD
+  dueTime: string; // HH:mm
+  type: 'homework' | 'project' | 'essay' | 'presentation' | 'lab' | 'other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  steps: AssignmentStep[];
+  completed: boolean;
+  notes: string;
+}
+
+export interface AssignmentStep {
+  id: string;
+  name: string;
+  completed: boolean;
+}
+
+export const ASSIGNMENT_TYPES = {
+  homework: { label: 'Deberes', emoji: '📝', color: 'bg-blue-500' },
+  project: { label: 'Proyecto', emoji: '🎨', color: 'bg-purple-500' },
+  essay: { label: 'Redacción', emoji: '✍️', color: 'bg-indigo-500' },
+  presentation: { label: 'Presentación', emoji: '🎤', color: 'bg-pink-500' },
+  lab: { label: 'Prácticas', emoji: '🔬', color: 'bg-teal-500' },
+  other: { label: 'Otro', emoji: '📌', color: 'bg-gray-500' },
+};
+
 export interface AppState {
   subjects: Subject[];
   classes: ClassSession[];
   exams: Exam[];
+  assignments: Assignment[];
   darkMode: boolean;
 }
 

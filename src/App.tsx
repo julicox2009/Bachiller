@@ -6,6 +6,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import Dashboard from './pages/Dashboard';
 import Schedule from './pages/Schedule';
 import Exams from './pages/Exams';
+import Assignments from './pages/Assignments';
 import Subjects from './pages/Subjects';
 import Settings from './pages/Settings';
 
@@ -111,6 +112,7 @@ function App() {
       case 'dashboard': return <Dashboard />;
       case 'schedule': return <Schedule />;
       case 'exams': return <Exams />;
+      case 'assignments': return <Assignments />;
       case 'subjects': return <Subjects />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
