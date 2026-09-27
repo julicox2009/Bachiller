@@ -9,6 +9,8 @@ import {
   examTopicsAPI,
   assignmentsAPI,
   assignmentStepsAPI,
+  supabaseUrl,
+  supabaseAnonKey,
 } from '../services/supabase';
 
 interface StoreState {
@@ -64,59 +66,73 @@ interface StoreState {
 export const syncFromSupabase = async () => {
   try {
     console.log('🔄 Sincronizando desde Supabase...');
+    console.log('🔑 URL:', supabaseUrl);
+    console.log('🔑 Key:', supabaseAnonKey.substring(0, 20) + '...');
 
     // Cargar subjects (tolerante a errores)
     let subjectsData: any[] = [];
     try {
       const { data, error } = await subjectsAPI.getAll();
+      console.log('📚 Subjects - Data:', data, 'Error:', error);
       if (!error && data) subjectsData = data;
+      if (error) console.error('❌ Error cargando subjects:', error);
     } catch (e) {
-      console.warn('Error cargando subjects:', e);
+      console.error('❌ Excepción cargando subjects:', e);
     }
 
     // Cargar class_sessions
     let classesData: any[] = [];
     try {
       const { data, error } = await classSessionsAPI.getAll();
+      console.log('📅 Classes - Data:', data, 'Error:', error);
       if (!error && data) classesData = data;
+      if (error) console.error('❌ Error cargando classes:', error);
     } catch (e) {
-      console.warn('Error cargando class_sessions:', e);
+      console.error('❌ Excepción cargando classes:', e);
     }
 
     // Cargar exams
     let examsData: any[] = [];
     try {
       const { data, error } = await examsAPI.getAll();
+      console.log('📝 Exams - Data:', data, 'Error:', error);
       if (!error && data) examsData = data;
+      if (error) console.error('❌ Error cargando exams:', error);
     } catch (e) {
-      console.warn('Error cargando exams:', e);
+      console.error('❌ Excepción cargando exams:', e);
     }
 
     // Cargar exam_topics
     let topicsData: any[] = [];
     try {
       const { data, error } = await examTopicsAPI.getAll();
+      console.log('📖 Topics - Data:', data, 'Error:', error);
       if (!error && data) topicsData = data;
+      if (error) console.error('❌ Error cargando topics:', error);
     } catch (e) {
-      console.warn('Error cargando exam_topics:', e);
+      console.error('❌ Excepción cargando topics:', e);
     }
 
     // Cargar assignments
     let assignmentsData: any[] = [];
     try {
       const { data, error } = await assignmentsAPI.getAll();
+      console.log('📋 Assignments - Data:', data, 'Error:', error);
       if (!error && data) assignmentsData = data;
+      if (error) console.error('❌ Error cargando assignments:', error);
     } catch (e) {
-      console.warn('Error cargando assignments:', e);
+      console.error('❌ Excepción cargando assignments:', e);
     }
 
     // Cargar assignment_steps
     let stepsData: any[] = [];
     try {
       const { data, error } = await assignmentStepsAPI.getAll();
+      console.log('📌 Steps - Data:', data, 'Error:', error);
       if (!error && data) stepsData = data;
+      if (error) console.error('❌ Error cargando steps:', error);
     } catch (e) {
-      console.warn('Error cargando assignment_steps:', e);
+      console.error('❌ Excepción cargando steps:', e);
     }
 
     // Transformar datos de Supabase al formato del store
@@ -209,6 +225,8 @@ export const useStore = create<StoreState>()(
         const id = uuidv4();
         const newSubject = { ...subject, id };
 
+        console.log('➕ Agregando subject:', newSubject);
+
         // Actualizar estado local inmediatamente
         set((state) => ({
           subjects: [...state.subjects, newSubject],
@@ -216,15 +234,18 @@ export const useStore = create<StoreState>()(
 
         // Sincronizar con Supabase
         try {
-          const { error } = await subjectsAPI.create({
+          console.log('📤 Enviando a Supabase...');
+          const { data, error } = await subjectsAPI.create({
             id,
             name: subject.name,
             color: subject.color,
             professor: subject.professor,
           });
+          console.log('📥 Respuesta de Supabase - Data:', data, 'Error:', error);
           if (error) throw error;
+          console.log('✅ Subject guardado en Supabase');
         } catch (error) {
-          console.error('Error creating subject in Supabase:', error);
+          console.error('❌ Error creando subject en Supabase:', error);
         }
       },
 
