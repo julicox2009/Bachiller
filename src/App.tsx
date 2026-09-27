@@ -9,6 +9,7 @@ import Exams from './pages/Exams';
 import Assignments from './pages/Assignments';
 import Subjects from './pages/Subjects';
 import Settings from './pages/Settings';
+import Diagnostic from './pages/Diagnostic';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -116,6 +117,7 @@ function App() {
       case 'assignments': return <Assignments />;
       case 'subjects': return <Subjects />;
       case 'settings': return <Settings />;
+      case 'diagnostic': return <Diagnostic />;
       default: return <Dashboard />;
     }
   };
