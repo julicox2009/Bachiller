@@ -24,14 +24,14 @@ export default function Subjects() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name) return;
 
     if (editingSubject) {
-      updateSubject(editingSubject.id, form);
+      await updateSubject(editingSubject.id, form);
     } else {
-      addSubject(form.name, form.color, form.professor);
+      await addSubject({ name: form.name, color: form.color, professor: form.professor });
     }
     setShowModal(false);
   };

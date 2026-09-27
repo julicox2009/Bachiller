@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from './store/useStore';
-import { initDatabase } from './services/database';
+import { syncFromSupabase } from './store/useStore';
 import Layout from './components/Layout';
 import WelcomeScreen from './components/WelcomeScreen';
 import Dashboard from './pages/Dashboard';
@@ -13,17 +13,16 @@ import Settings from './pages/Settings';
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [dbReady, setDbReady] = useState(false);
-  const { darkMode, subjects, loadFromDatabase } = useStore();
+  const { darkMode, subjects } = useStore();
 
-  // Inicializar SQLite al cargar la app
+  // Sincronizar con Supabase al cargar la app
   useEffect(() => {
-    initDatabase()
+    syncFromSupabase()
       .then(() => {
-        loadFromDatabase();
         setDbReady(true);
       })
-      .catch((error) => {
-        console.error('Error inicializando base de datos:', error);
+      .catch((error: any) => {
+        console.error('Error sincronizando con Supabase:', error);
         setDbReady(true); // Continuar aunque falle
       });
   }, []);

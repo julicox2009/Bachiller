@@ -24,9 +24,9 @@ export default function Settings() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const json = event.target?.result as string;
-      const success = importData(json);
+      const success = await importData(json);
       if (success) {
         alert('✅ Datos importados correctamente');
       } else {
