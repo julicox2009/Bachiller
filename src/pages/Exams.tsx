@@ -60,21 +60,21 @@ export default function Exams() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subjectId) return;
 
     if (editingExam) {
-      updateExam(editingExam.id, form);
+      await updateExam(editingExam.id, form);
     } else {
-      addExam({ ...form, topics: [] });
+      await addExam({ ...form, topics: [] });
     }
     setShowModal(false);
   };
 
-  const handleAddTopic = (examId: string) => {
+  const handleAddTopic = async (examId: string) => {
     if (!newTopic.trim()) return;
-    addTopic(examId, newTopic.trim());
+    await addTopic(examId, newTopic.trim());
     setNewTopic('');
   };
 
@@ -139,7 +139,7 @@ export default function Exams() {
                   className={`flex items-center gap-3 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}
                 >
                   <button
-                    onClick={() => toggleTopic(studyExam.id, topic.id)}
+                    onClick={async () => await toggleTopic(studyExam.id, topic.id)}
                     className="flex-shrink-0"
                   >
                     {topic.completed ? (
@@ -152,7 +152,7 @@ export default function Exams() {
                     {topic.name}
                   </span>
                   <button
-                    onClick={() => deleteTopic(studyExam.id, topic.id)}
+                    onClick={async () => await deleteTopic(studyExam.id, topic.id)}
                     className="p-1 text-red-400 hover:text-red-500"
                   >
                     <Trash2 size={14} />
@@ -457,8 +457,8 @@ export default function Exams() {
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  deleteExam(showDeleteConfirm);
+                onClick={async () => {
+                  await deleteExam(showDeleteConfirm);
                   setShowDeleteConfirm(null);
                 }}
                 className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"

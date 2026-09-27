@@ -229,8 +229,8 @@ export default function Subjects() {
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  deleteSubject(showDeleteConfirm);
+                onClick={async () => {
+                  await deleteSubject(showDeleteConfirm);
                   setShowDeleteConfirm(null);
                 }}
                 className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"

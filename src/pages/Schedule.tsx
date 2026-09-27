@@ -73,14 +73,14 @@ export default function Schedule() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subjectId || !form.room) return;
 
     if (editingClass) {
-      updateClass(editingClass.id, form);
+      await updateClass(editingClass.id, form);
     } else {
-      addClass(form);
+      await addClass(form);
     }
     setShowModal(false);
   };
@@ -437,8 +437,8 @@ export default function Schedule() {
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  deleteClass(showDeleteConfirm);
+                onClick={async () => {
+                  await deleteClass(showDeleteConfirm);
                   setShowDeleteConfirm(null);
                 }}
                 className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"

@@ -55,21 +55,21 @@ export default function Assignments() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subjectId || !form.title) return;
 
     if (editingAssignment) {
-      updateAssignment(editingAssignment.id, { ...form, steps: editingAssignment.steps });
+      await updateAssignment(editingAssignment.id, { ...form, steps: editingAssignment.steps });
     } else {
-      addAssignment({ ...form, steps: [], completed: false });
+      await addAssignment({ ...form, steps: [], completed: false });
     }
     setShowModal(false);
   };
 
-  const handleAddStep = (assignmentId: string) => {
+  const handleAddStep = async (assignmentId: string) => {
     if (!newStep.trim()) return;
-    addAssignmentStep(assignmentId, newStep.trim());
+    await addAssignmentStep(assignmentId, newStep.trim());
     setNewStep('');
   };
 
@@ -182,7 +182,7 @@ export default function Assignments() {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <button
-                      onClick={() => toggleAssignment(assignment.id)}
+                      onClick={async () => await toggleAssignment(assignment.id)}
                       className="flex-shrink-0 mt-1"
                     >
                       {assignment.completed ? (
@@ -263,7 +263,7 @@ export default function Assignments() {
                       {assignment.steps.map((step) => (
                         <div key={step.id} className="flex items-center gap-2">
                           <button
-                            onClick={() => toggleAssignmentStep(assignment.id, step.id)}
+                            onClick={async () => await toggleAssignmentStep(assignment.id, step.id)}
                             className="flex-shrink-0"
                           >
                             {step.completed ? (
@@ -276,7 +276,7 @@ export default function Assignments() {
                             {step.name}
                           </span>
                           <button
-                            onClick={() => deleteAssignmentStep(assignment.id, step.id)}
+                            onClick={async () => await deleteAssignmentStep(assignment.id, step.id)}
                             className="p-1 text-red-400 hover:text-red-500"
                           >
                             <Trash2 size={12} />
@@ -353,8 +353,8 @@ export default function Assignments() {
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  deleteAssignment(showDeleteConfirm);
+                onClick={async () => {
+                  await deleteAssignment(showDeleteConfirm);
                   setShowDeleteConfirm(null);
                 }}
                 className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium shadow-lg shadow-red-500/25"

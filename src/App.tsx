@@ -17,14 +17,16 @@ function App() {
 
   // Sincronizar con Supabase al cargar la app
   useEffect(() => {
-    syncFromSupabase()
-      .then(() => {
+    const initApp = async () => {
+      try {
+        await syncFromSupabase();
+      } catch (error) {
+        console.warn('No se pudo sincronizar con Supabase, usando datos locales:', error);
+      } finally {
         setDbReady(true);
-      })
-      .catch((error: any) => {
-        console.error('Error sincronizando con Supabase:', error);
-        setDbReady(true); // Continuar aunque falle
-      });
+      }
+    };
+    initApp();
   }, []);
 
   useEffect(() => {

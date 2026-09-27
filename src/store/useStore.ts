@@ -65,29 +65,59 @@ export const syncFromSupabase = async () => {
   try {
     console.log('🔄 Sincronizando desde Supabase...');
 
-    // Cargar subjects
-    const { data: subjectsData, error: subjectsError } = await subjectsAPI.getAll();
-    if (subjectsError) throw subjectsError;
+    // Cargar subjects (tolerante a errores)
+    let subjectsData: any[] = [];
+    try {
+      const { data, error } = await subjectsAPI.getAll();
+      if (!error && data) subjectsData = data;
+    } catch (e) {
+      console.warn('Error cargando subjects:', e);
+    }
 
     // Cargar class_sessions
-    const { data: classesData, error: classesError } = await classSessionsAPI.getAll();
-    if (classesError) throw classesError;
+    let classesData: any[] = [];
+    try {
+      const { data, error } = await classSessionsAPI.getAll();
+      if (!error && data) classesData = data;
+    } catch (e) {
+      console.warn('Error cargando class_sessions:', e);
+    }
 
     // Cargar exams
-    const { data: examsData, error: examsError } = await examsAPI.getAll();
-    if (examsError) throw examsError;
+    let examsData: any[] = [];
+    try {
+      const { data, error } = await examsAPI.getAll();
+      if (!error && data) examsData = data;
+    } catch (e) {
+      console.warn('Error cargando exams:', e);
+    }
 
     // Cargar exam_topics
-    const { data: topicsData, error: topicsError } = await examTopicsAPI.getAll();
-    if (topicsError) throw topicsError;
+    let topicsData: any[] = [];
+    try {
+      const { data, error } = await examTopicsAPI.getAll();
+      if (!error && data) topicsData = data;
+    } catch (e) {
+      console.warn('Error cargando exam_topics:', e);
+    }
 
     // Cargar assignments
-    const { data: assignmentsData, error: assignmentsError } = await assignmentsAPI.getAll();
-    if (assignmentsError) throw assignmentsError;
+    let assignmentsData: any[] = [];
+    try {
+      const { data, error } = await assignmentsAPI.getAll();
+      if (!error && data) assignmentsData = data;
+    } catch (e) {
+      console.warn('Error cargando assignments:', e);
+    }
 
     // Cargar assignment_steps
-    const { data: stepsData, error: stepsError } = await assignmentStepsAPI.getAll();
-    if (stepsError) throw stepsError;
+    let stepsData: any[] = [];
+    try {
+      const { data, error } = await assignmentStepsAPI.getAll();
+      if (!error && data) stepsData = data;
+    } catch (e) {
+      console.warn('Error cargando assignment_steps:', e);
+    }
 
     // Transformar datos de Supabase al formato del store
     const subjects: Subject[] = subjectsData || [];
