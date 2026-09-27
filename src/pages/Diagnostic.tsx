@@ -38,7 +38,10 @@ export default function Diagnostic() {
 
     // Test 2: Insertar dato de prueba
     setResults(prev => [...prev, { test: 'Insertar dato de prueba', status: 'loading', message: 'Insertando...' }]);
-    const testId = 'test-' + Date.now();
+    
+    // Generar UUID válido
+    const testId = crypto.randomUUID();
+    
     try {
       const { data, error } = await supabase
         .from('subjects')
