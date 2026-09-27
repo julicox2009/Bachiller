@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
@@ -14,32 +14,42 @@ export default function Diagnostic() {
     setIsRunning(true);
     setResults([]);
 
+    // Mostrar configuración
+    setResults([{
+      test: '🔧 Configuración',
+      status: 'success',
+      message: `URL: ${supabaseUrl}\nKey: ${supabaseAnonKey.substring(0, 30)}...`
+    }]);
+
     // Test 1: Conexión básica
-    setResults(prev => [...prev, { test: 'Conexión a Supabase', status: 'loading', message: 'Verificando...' }]);
+    setResults(prev => [...prev, { test: '🔌 Conexión a Supabase', status: 'loading', message: 'Verificando...' }]);
     try {
       const { error } = await supabase.from('subjects').select('count').limit(1);
       if (error) {
-        setResults(prev => prev.map(r => r.test === 'Conexión a Supabase' 
-          ? { ...r, status: 'error', message: `Error: ${error.message}` }
+        setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
+          ? { ...r, status: 'error', message: `Error: ${error.message}\n\n🔴 PROBLEMA: Las políticas RLS no están configuradas\n\n✅ SOLUCIÓN: Ejecuta el script "configuracion_completa.sql" en Supabase SQL Editor` }
           : r
         ));
+        setIsRunning(false);
+        return;
       } else {
-        setResults(prev => prev.map(r => r.test === 'Conexión a Supabase' 
-          ? { ...r, status: 'success', message: 'Conexión exitosa' }
+        setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
+          ? { ...r, status: 'success', message: '✅ Conexión exitosa' }
           : r
         ));
       }
     } catch (e: any) {
-      setResults(prev => prev.map(r => r.test === 'Conexión a Supabase' 
+      setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
         ? { ...r, status: 'error', message: `Error: ${e.message}` }
         : r
       ));
+      setIsRunning(false);
+      return;
     }
 
     // Test 2: Insertar dato de prueba
-    setResults(prev => [...prev, { test: 'Insertar dato de prueba', status: 'loading', message: 'Insertando...' }]);
+    setResults(prev => [...prev, { test: '➕ Insertar dato de prueba', status: 'loading', message: 'Insertando...' }]);
     
-    // Generar UUID válido
     const testId = crypto.randomUUID();
     
     try {
@@ -55,25 +65,29 @@ export default function Diagnostic() {
         .single();
 
       if (error) {
-        setResults(prev => prev.map(r => r.test === 'Insertar dato de prueba' 
-          ? { ...r, status: 'error', message: `Error: ${error.message}\n\nSOLUCIÓN: Ejecuta el script SQL de políticas RLS en Supabase` }
+        setResults(prev => prev.map(r => r.test === '➕ Insertar dato de prueba' 
+          ? { ...r, status: 'error', message: `Error: ${error.message}\n\n🔴 PROBLEMA: No tienes permisos de INSERT\n\n✅ SOLUCIÓN: Ejecuta el script "configuracion_completa.sql" en Supabase SQL Editor` }
           : r
         ));
+        setIsRunning(false);
+        return;
       } else {
-        setResults(prev => prev.map(r => r.test === 'Insertar dato de prueba' 
-          ? { ...r, status: 'success', message: `Dato insertado con ID: ${data.id}` }
+        setResults(prev => prev.map(r => r.test === '➕ Insertar dato de prueba' 
+          ? { ...r, status: 'success', message: `✅ Dato insertado con ID: ${data.id}` }
           : r
         ));
       }
     } catch (e: any) {
-      setResults(prev => prev.map(r => r.test === 'Insertar dato de prueba' 
+      setResults(prev => prev.map(r => r.test === '➕ Insertar dato de prueba' 
         ? { ...r, status: 'error', message: `Error: ${e.message}` }
         : r
       ));
+      setIsRunning(false);
+      return;
     }
 
     // Test 3: Leer dato de prueba
-    setResults(prev => [...prev, { test: 'Leer dato de prueba', status: 'loading', message: 'Leyendo...' }]);
+    setResults(prev => [...prev, { test: '📖 Leer dato de prueba', status: 'loading', message: 'Leyendo...' }]);
     try {
       const { data, error } = await supabase
         .from('subjects')
@@ -82,30 +96,36 @@ export default function Diagnostic() {
         .single();
 
       if (error) {
-        setResults(prev => prev.map(r => r.test === 'Leer dato de prueba' 
+        setResults(prev => prev.map(r => r.test === '📖 Leer dato de prueba' 
           ? { ...r, status: 'error', message: `Error: ${error.message}` }
           : r
         ));
+        setIsRunning(false);
+        return;
       } else if (data) {
-        setResults(prev => prev.map(r => r.test === 'Leer dato de prueba' 
-          ? { ...r, status: 'success', message: `Dato leído: ${data.name}` }
+        setResults(prev => prev.map(r => r.test === '📖 Leer dato de prueba' 
+          ? { ...r, status: 'success', message: `✅ Dato leído: ${data.name}` }
           : r
         ));
       } else {
-        setResults(prev => prev.map(r => r.test === 'Leer dato de prueba' 
+        setResults(prev => prev.map(r => r.test === '📖 Leer dato de prueba' 
           ? { ...r, status: 'error', message: 'No se encontró el dato insertado' }
           : r
         ));
+        setIsRunning(false);
+        return;
       }
     } catch (e: any) {
-      setResults(prev => prev.map(r => r.test === 'Leer dato de prueba' 
+      setResults(prev => prev.map(r => r.test === '📖 Leer dato de prueba' 
         ? { ...r, status: 'error', message: `Error: ${e.message}` }
         : r
       ));
+      setIsRunning(false);
+      return;
     }
 
     // Test 4: Eliminar dato de prueba
-    setResults(prev => [...prev, { test: 'Eliminar dato de prueba', status: 'loading', message: 'Eliminando...' }]);
+    setResults(prev => [...prev, { test: '🗑️ Eliminar dato de prueba', status: 'loading', message: 'Eliminando...' }]);
     try {
       const { error } = await supabase
         .from('subjects')
@@ -113,18 +133,18 @@ export default function Diagnostic() {
         .eq('id', testId);
 
       if (error) {
-        setResults(prev => prev.map(r => r.test === 'Eliminar dato de prueba' 
+        setResults(prev => prev.map(r => r.test === '🗑️ Eliminar dato de prueba' 
           ? { ...r, status: 'error', message: `Error: ${error.message}` }
           : r
         ));
       } else {
-        setResults(prev => prev.map(r => r.test === 'Eliminar dato de prueba' 
-          ? { ...r, status: 'success', message: 'Dato eliminado correctamente' }
+        setResults(prev => prev.map(r => r.test === '🗑️ Eliminar dato de prueba' 
+          ? { ...r, status: 'success', message: '✅ Dato eliminado correctamente' }
           : r
         ));
       }
     } catch (e: any) {
-      setResults(prev => prev.map(r => r.test === 'Eliminar dato de prueba' 
+      setResults(prev => prev.map(r => r.test === '🗑️ Eliminar dato de prueba' 
         ? { ...r, status: 'error', message: `Error: ${e.message}` }
         : r
       ));
@@ -154,7 +174,7 @@ export default function Diagnostic() {
               Ejecutando diagnóstico...
             </>
           ) : (
-            'Ejecutar Diagnóstico'
+            '🚀 Ejecutar Diagnóstico'
           )}
         </button>
 
@@ -193,31 +213,37 @@ export default function Diagnostic() {
           <div className="flex items-start gap-3">
             <AlertCircle size={24} className="text-orange-500 flex-shrink-0" />
             <div>
-              <h3 className="font-bold text-lg mb-2">Solución</h3>
+              <h3 className="font-bold text-lg mb-2">🔧 Solución</h3>
               <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Si ves errores de "row-level security" o "permission denied", necesitas configurar las políticas RLS en Supabase:
+                Los errores indican que las políticas RLS no están configuradas. Sigue estos pasos:
               </p>
               <ol className={`text-sm space-y-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                <li>1. Ve a Supabase → SQL Editor</li>
-                <li>2. Ejecuta el script de políticas RLS (ver abajo)</li>
-                <li>3. Vuelve a ejecutar el diagnóstico</li>
+                <li><strong>1.</strong> Ve a Supabase → SQL Editor</li>
+                <li><strong>2.</strong> Copia y pega el script <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">configuracion_completa.sql</code></li>
+                <li><strong>3.</strong> Ejecuta el script (botón "Run")</li>
+                <li><strong>4.</strong> Vuelve aquí y ejecuta el diagnóstico nuevamente</li>
               </ol>
               <div className={`mt-4 p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <p className="text-xs font-mono whitespace-pre-wrap">
-{`-- Script de políticas RLS
-ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE class_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exams ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exam_topics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE assignment_steps ENABLE ROW LEVEL SECURITY;
+{`-- Script de configuración completa
+-- Ejecutar en Supabase SQL Editor
 
-CREATE POLICY "Allow all" ON subjects FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON class_sessions FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON exams FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON exam_topics FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON assignments FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON assignment_steps FOR ALL USING (true) WITH CHECK (true);`}
+-- Crear tablas
+CREATE TABLE IF NOT EXISTS subjects (...);
+CREATE TABLE IF NOT EXISTS class_sessions (...);
+CREATE TABLE IF NOT EXISTS exams (...);
+CREATE TABLE IF NOT EXISTS exam_topics (...);
+CREATE TABLE IF NOT EXISTS assignments (...);
+CREATE TABLE IF NOT EXISTS assignment_steps (...);
+
+-- Habilitar RLS
+ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
+-- ... (resto del script)
+
+-- Crear políticas
+CREATE POLICY "allow_all_subjects" ON subjects
+  FOR ALL USING (true) WITH CHECK (true);
+-- ... (resto de políticas)`}
                 </p>
               </div>
             </div>
@@ -225,12 +251,12 @@ CREATE POLICY "Allow all" ON assignment_steps FOR ALL USING (true) WITH CHECK (t
         </div>
       )}
 
-      {results.every(r => r.status === 'success') && (
+      {results.every(r => r.status === 'success') && results.length > 1 && (
         <div className={`${cardClass} border rounded-2xl p-6 border-l-4 border-green-500`}>
           <div className="flex items-start gap-3">
             <CheckCircle2 size={24} className="text-green-500 flex-shrink-0" />
             <div>
-              <h3 className="font-bold text-lg mb-2">¡Todo funciona correctamente!</h3>
+              <h3 className="font-bold text-lg mb-2">✅ ¡Todo funciona correctamente!</h3>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 La conexión con Supabase está configurada correctamente. Los datos se sincronizarán automáticamente entre dispositivos.
               </p>
