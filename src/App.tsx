@@ -12,8 +12,23 @@ import Diagnostic from './pages/Diagnostic';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [dbReady, setDbReady] = useState(true);
-  const { darkMode, subjects } = useStore();
+  const [dbReady, setDbReady] = useState(false);
+  const { darkMode, subjects, loadFromSupabase } = useStore();
+
+  // Cargar datos desde Supabase al iniciar
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        await loadFromSupabase();
+        console.log('✅ Datos inicializados desde Supabase');
+      } catch (error) {
+        console.warn('⚠️ No se pudo cargar desde Supabase, usando localStorage:', error);
+      } finally {
+        setDbReady(true);
+      }
+    };
+    initData();
+  }, []);
 
   useEffect(() => {
     if (darkMode) {

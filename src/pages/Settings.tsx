@@ -32,7 +32,7 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const json = event.target?.result as string;
-      const success = importData(json);
+      const success = await importData(json);
       if (success) {
         alert('✅ Datos importados correctamente');
       } else {

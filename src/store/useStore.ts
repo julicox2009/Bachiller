@@ -24,22 +24,22 @@ interface StoreState {
   isOnline: boolean;
 
   addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
-  updateSubject: (id: string,  Partial<Subject>) => Promise<void>;
+  updateSubject: (id: string, data: Partial<Subject>) => Promise<void>;
   deleteSubject: (id: string) => Promise<void>;
 
   addClass: (cls: Omit<ClassSession, 'id'>) => Promise<void>;
-  updateClass: (id: string,  Partial<ClassSession>) => Promise<void>;
+  updateClass: (id: string, data: Partial<ClassSession>) => Promise<void>;
   deleteClass: (id: string) => Promise<void>;
 
   addExam: (exam: Omit<Exam, 'id'>) => Promise<void>;
-  updateExam: (id: string,  Partial<Exam>) => Promise<void>;
+  updateExam: (id: string, data: Partial<Exam>) => Promise<void>;
   deleteExam: (id: string) => Promise<void>;
   toggleTopic: (examId: string, topicId: string) => Promise<void>;
   addTopic: (examId: string, topicName: string) => Promise<void>;
   deleteTopic: (examId: string, topicId: string) => Promise<void>;
 
   addAssignment: (assignment: Omit<Assignment, 'id'>) => Promise<void>;
-  updateAssignment: (id: string,  Partial<Assignment>) => Promise<void>;
+  updateAssignment: (id: string, data: Partial<Assignment>) => Promise<void>;
   deleteAssignment: (id: string) => Promise<void>;
   toggleAssignment: (id: string) => Promise<void>;
   toggleAssignmentStep: (assignmentId: string, stepId: string) => Promise<void>;
