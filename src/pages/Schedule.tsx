@@ -138,10 +138,17 @@ export default function Schedule() {
                     const sessions = scheduleGrid[key] || [];
                     const isStart = sessions.some((s) => s.startTime === time);
                     const isMiddle = sessions.some((s) => s.startTime < time && s.endTime > time);
+                    const isRecess = time === '11:15';
 
                     return (
                       <td key={dayIdx} className="p-1 h-14 relative align-top">
-                        {isStart && sessions.map((session) => {
+                        {isRecess ? (
+                          <div className={`w-full h-full rounded-lg flex items-center justify-center ${darkMode ? 'bg-gray-700/30' : 'bg-gray-100'}`}>
+                            <span className={`text-xs font-bold ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                              ☕ RECREO
+                            </span>
+                          </div>
+                        ) : isStart && sessions.map((session) => {
                           const subject = getSubject(session.subjectId);
                           if (!subject) return null;
                           const startIdx = TIME_SLOTS.indexOf(session.startTime);
@@ -189,7 +196,7 @@ export default function Schedule() {
                             </div>
                           );
                         })}
-                        {!isStart && !isMiddle && (
+                        {!isStart && !isMiddle && !isRecess && (
                           <button
                             onClick={() => openAddModal(dayIdx, time)}
                             className={`w-full h-full rounded-lg opacity-0 hover:opacity-100 transition-opacity ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-blue-50'} flex items-center justify-center`}
@@ -248,28 +255,35 @@ export default function Schedule() {
 
         {/* Day Classes */}
         <div className="space-y-3">
-          {mobileDayClasses.length === 0 ? (
-            <div className={`${cardClass} border rounded-2xl p-8 text-center`}>
-              <p className="text-4xl mb-3">📭</p>
-              <p className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                No hay clases el {DAYS[mobileDay]}
-              </p>
-              <button
-                onClick={() => openAddModal(mobileDay, '08:15')}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600"
-              >
-                Agregar clase
-              </button>
-            </div>
-          ) : (
-            mobileDayClasses.map((cls) => {
-              const subject = cls.subject!;
+          {TIME_SLOTS.map((time) => {
+            const isRecess = time === '11:15';
+            const classInSlot = mobileDayClasses.find((c) => c.startTime === time);
+
+            if (isRecess) {
               return (
                 <div
-                  key={cls.id}
+                  key={time}
+                  className={`${cardClass} border rounded-2xl p-4 ${darkMode ? 'bg-gray-700/30' : 'bg-gray-100'}`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl">☕</span>
+                    <div className="text-center">
+                      <p className={`font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>RECREO</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>11:15 - 11:45</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            if (classInSlot) {
+              const subject = classInSlot.subject!;
+              return (
+                <div
+                  key={classInSlot.id}
                   className={`${cardClass} border rounded-2xl p-4 border-l-4 cursor-pointer hover:shadow-md transition-shadow`}
                   style={{ borderLeftColor: subject.color }}
-                  onClick={() => openEditModal(cls)}
+                  onClick={() => openEditModal(classInSlot)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -287,16 +301,31 @@ export default function Schedule() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm">{cls.startTime} - {cls.endTime}</p>
+                      <p className="font-bold text-sm">{classInSlot.startTime} - {classInSlot.endTime}</p>
                       <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        📍 {cls.room}
+                        📍 {classInSlot.room}
                       </p>
                     </div>
                   </div>
                 </div>
               );
-            })
-          )}
+            }
+
+            return (
+              <button
+                key={time}
+                onClick={() => openAddModal(mobileDay, time)}
+                className={`w-full ${cardClass} border rounded-2xl p-4 hover:shadow-md transition-shadow ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-blue-50'}`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Plus size={16} className="text-blue-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {time} - Agregar clase
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
