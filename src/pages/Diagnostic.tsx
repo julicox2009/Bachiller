@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey, testConnection } from '../services/supabase';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
@@ -18,33 +18,46 @@ export default function Diagnostic() {
     setResults([{
       test: '🔧 Configuración',
       status: 'success',
-      message: `URL: ${supabaseUrl}\nKey: ${supabaseAnonKey.substring(0, 30)}...`
+      message: `URL: ${supabaseUrl}\nKey: ${supabaseAnonKey.substring(0, 50)}...`
     }]);
 
-    // Test 1: Conexión básica
-    setResults(prev => [...prev, { test: '🔌 Conexión a Supabase', status: 'loading', message: 'Verificando...' }]);
+    // Test 1: Conexión básica con fetch directo
+    setResults(prev => [...prev, { test: '🔌 Conexión directa (fetch)', status: 'loading', message: 'Verificando...' }]);
     try {
-      const { error } = await supabase.from('subjects').select('count').limit(1);
-      if (error) {
-        setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
-          ? { ...r, status: 'error', message: `Error: ${error.message}\n\n🔴 PROBLEMA: Las políticas RLS no están configuradas\n\n✅ SOLUCIÓN: Ejecuta el script "configuracion_completa.sql" en Supabase SQL Editor` }
-          : r
-        ));
-        setIsRunning(false);
-        return;
-      } else {
-        setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
-          ? { ...r, status: 'success', message: '✅ Conexión exitosa' }
-          : r
-        ));
-      }
+      const data = await testConnection();
+      setResults(prev => prev.map(r => r.test === '🔌 Conexión directa (fetch)' 
+        ? { ...r, status: 'success', message: `✅ Conexión exitosa. Datos: ${JSON.stringify(data).substring(0, 100)}...` }
+        : r
+      ));
     } catch (e: any) {
-      setResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
-        ? { ...r, status: 'error', message: `Error: ${e.message}` }
+      setResults(prev => prev.map(r => r.test === '🔌 Conexión directa (fetch)' 
+        ? { ...r, status: 'error', message: `Error: ${e.message}\n\n🔴 PROBLEMA: La API no acepta la clave\n\n✅ SOLUCIÓN:\n1. Verifica que el proyecto esté ACTIVO en Supabase\n2. Ejecuta el script "solucion_error_401.sql" en SQL Editor\n3. Verifica que la clave anon sea correcta en Settings > API` }
         : r
       ));
       setIsRunning(false);
       return;
+    }
+
+    // Test 2: Conexión con cliente Supabase
+    setResults(prev => [...prev, { test: '🔌 Conexión con cliente Supabase', status: 'loading', message: 'Verificando...' }]);
+    try {
+      const { data, error } = await supabase.from('subjects').select('*').limit(1);
+      if (error) {
+        setResults(prev => prev.map(r => r.test === '🔌 Conexión con cliente Supabase' 
+          ? { ...r, status: 'error', message: `Error: ${error.message}\n\nDetalles: ${JSON.stringify(error)}` }
+          : r
+        ));
+      } else {
+        setResults(prev => prev.map(r => r.test === '🔌 Conexión con cliente Supabase' 
+          ? { ...r, status: 'success', message: `✅ Cliente funcionando. Datos: ${JSON.stringify(data).substring(0, 100)}...` }
+          : r
+        ));
+      }
+    } catch (e: any) {
+      setResults(prev => prev.map(r => r.test === '🔌 Conexión con cliente Supabase' 
+        ? { ...r, status: 'error', message: `Error: ${e.message}` }
+        : r
+      ));
     }
 
     // Test 2: Insertar dato de prueba

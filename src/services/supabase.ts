@@ -3,7 +3,49 @@ import { createClient } from '@supabase/supabase-js';
 export const supabaseUrl = 'https://tklydzedvcnkgrrtuugb.supabase.co';
 export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrbHlkemVkdmNua2dycnR1dWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjU5NzIsImV4cCI6MjEwNjEwMTk3Mn0.7epYWTmdZO6VtxyliyJQVpyUd9WfDdZDM8HPDfYcND4';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  global: {
+    headers: {
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+    },
+  },
+});
+
+// Función de prueba para verificar la conexión
+export const testConnection = async () => {
+  try {
+    console.log('🔍 Probando conexión con Supabase...');
+    console.log('URL:', supabaseUrl);
+    console.log('Key:', supabaseAnonKey.substring(0, 50) + '...');
+    
+    const response = await fetch(`${supabaseUrl}/rest/v1/subjects?select=*`, {
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+    });
+    
+    console.log('📊 Respuesta:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Datos recibidos:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error de conexión:', error);
+    throw error;
+  }
+};
 
 // Tipos para las operaciones
 export interface SubjectDB {
