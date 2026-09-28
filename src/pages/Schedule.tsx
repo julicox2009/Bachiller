@@ -15,8 +15,8 @@ export default function Schedule() {
   const [form, setForm] = useState({
     subjectId: '',
     dayOfWeek: 0,
-    startTime: '08:00',
-    endTime: '09:00',
+    startTime: '08:15',
+    endTime: '09:15',
     room: '',
   });
 
@@ -55,7 +55,7 @@ export default function Schedule() {
       subjectId: subjects[0]?.id || '',
       dayOfWeek: day,
       startTime: time,
-      endTime: TIME_SLOTS[Math.min(TIME_SLOTS.indexOf(time) + 1, TIME_SLOTS.length - 1)] || '09:00',
+      endTime: TIME_SLOTS[Math.min(TIME_SLOTS.indexOf(time) + 1, TIME_SLOTS.length - 1)] || '09:15',
       room: '',
     });
     setShowModal(true);
@@ -100,8 +100,8 @@ export default function Schedule() {
             setForm({
               subjectId: subjects[0]?.id || '',
               dayOfWeek: mobileDay,
-              startTime: '08:00',
-              endTime: '09:00',
+              startTime: '08:15',
+              endTime: '09:15',
               room: '',
             });
             setShowModal(true);
@@ -255,7 +255,7 @@ export default function Schedule() {
                 No hay clases el {DAYS[mobileDay]}
               </p>
               <button
-                onClick={() => openAddModal(mobileDay, '08:00')}
+                onClick={() => openAddModal(mobileDay, '08:15')}
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600"
               >
                 Agregar clase
