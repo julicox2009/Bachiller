@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { Download, Upload, Moon, Sun, Bell, Database, Info } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Download, Upload, Moon, Sun, Bell, Database, Info, CheckCircle } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 export default function Settings() {
-  const { darkMode, toggleDarkMode, exportData, importData, subjects, classes, exams } = useStore();
+  const { darkMode, toggleDarkMode, exportData, importData, subjects, classes, exams, assignments } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [exportSuccess, setExportSuccess] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
 
   const cardClass = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
 
@@ -14,9 +16,13 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `academic-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `bachiller-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    // Mostrar feedback visual
+    setExportSuccess(true);
+    setTimeout(() => setExportSuccess(false), 3000);
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,7 +32,7 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const json = event.target?.result as string;
-      const success = await importData(json);
+      const success = importData(json);
       if (success) {
         alert('✅ Datos importados correctamente');
       } else {
@@ -41,10 +47,12 @@ export default function Settings() {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
+        setNotificationStatus('granted');
         new Notification('BachillerManager', {
           body: '¡Notificaciones activadas! Te avisaremos antes de tus clases y exámenes.',
-          icon: '/favicon.ico',
         });
+      } else {
+        setNotificationStatus('denied');
       }
     } else {
       alert('Tu navegador no soporta notificaciones');
@@ -98,9 +106,24 @@ export default function Settings() {
             </div>
             <button
               onClick={requestNotificationPermission}
-              className="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors text-sm font-medium"
+              className={`px-4 py-2 rounded-xl transition-all text-sm font-medium flex items-center gap-2 ${
+                notificationStatus === 'granted'
+                  ? 'bg-green-600 text-white'
+                  : notificationStatus === 'denied'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`}
             >
-              Activar
+              {notificationStatus === 'granted' ? (
+                <>
+                  <CheckCircle size={16} />
+                  Activadas
+                </>
+              ) : notificationStatus === 'denied' ? (
+                'Denegadas'
+              ) : (
+                'Activar'
+              )}
             </button>
           </div>
           <div className={`p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
@@ -126,7 +149,7 @@ export default function Settings() {
           {/* Stats */}
           <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
             <p className="text-sm font-medium mb-2">Resumen de datos almacenados:</p>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-4 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-blue-500">{subjects.length}</p>
                 <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Asignaturas</p>
@@ -138,6 +161,10 @@ export default function Settings() {
               <div>
                 <p className="text-2xl font-bold text-purple-500">{exams.length}</p>
                 <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Exámenes</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-orange-500">{assignments.length}</p>
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Trabajos</p>
               </div>
             </div>
           </div>
@@ -152,10 +179,23 @@ export default function Settings() {
             </div>
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-sm font-medium"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${
+                exportSuccess
+                  ? 'bg-green-600 text-white'
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
             >
-              <Download size={16} />
-              Exportar
+              {exportSuccess ? (
+                <>
+                  <CheckCircle size={16} />
+                  ¡Exportado!
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  Exportar
+                </>
+              )}
             </button>
           </div>
 
