@@ -1,12 +1,59 @@
 import { useRef, useState } from 'react';
-import { Download, Upload, Moon, Sun, Bell, Database, Info, CheckCircle } from 'lucide-react';
+import { Download, Upload, Moon, Sun, Bell, Database, Info, CheckCircle, Activity, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { supabase, supabaseUrl, supabaseAnonKey, testConnection } from '../services/supabase';
 
 export default function Settings() {
   const { darkMode, toggleDarkMode, exportData, importData, subjects, classes, exams, assignments } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const [diagnosticResults, setDiagnosticResults] = useState<Array<{ test: string; status: 'success' | 'error' | 'loading'; message: string }>>([]);
+  const [isRunningDiagnostic, setIsRunningDiagnostic] = useState(false);
+
+  const runDiagnostic = async () => {
+    setIsRunningDiagnostic(true);
+    setDiagnosticResults([]);
+
+    // Test 1: Conexión directa
+    setDiagnosticResults(prev => [...prev, { test: '🔌 Conexión a Supabase', status: 'loading', message: 'Verificando...' }]);
+    try {
+      await testConnection();
+      setDiagnosticResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
+        ? { ...r, status: 'success', message: '✅ Conexión exitosa con Supabase' }
+        : r
+      ));
+    } catch (e: any) {
+      setDiagnosticResults(prev => prev.map(r => r.test === '🔌 Conexión a Supabase' 
+        ? { ...r, status: 'error', message: `Error: ${e.message}` }
+        : r
+      ));
+    }
+
+    // Test 2: Cliente Supabase
+    setDiagnosticResults(prev => [...prev, { test: '🔌 Cliente Supabase', status: 'loading', message: 'Verificando...' }]);
+    try {
+      const { data, error } = await supabase.from('subjects').select('*').limit(1);
+      if (error) {
+        setDiagnosticResults(prev => prev.map(r => r.test === '🔌 Cliente Supabase' 
+          ? { ...r, status: 'error', message: `Error: ${error.message}` }
+          : r
+        ));
+      } else {
+        setDiagnosticResults(prev => prev.map(r => r.test === '🔌 Cliente Supabase' 
+          ? { ...r, status: 'success', message: `✅ Cliente funcionando. Registros: ${data?.length || 0}` }
+          : r
+        ));
+      }
+    } catch (e: any) {
+      setDiagnosticResults(prev => prev.map(r => r.test === '🔌 Cliente Supabase' 
+        ? { ...r, status: 'error', message: `Error: ${e.message}` }
+        : r
+      ));
+    }
+
+    setIsRunningDiagnostic(false);
+  };
 
   const cardClass = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
 
@@ -219,6 +266,70 @@ export default function Settings() {
               />
             </label>
           </div>
+        </div>
+      </div>
+
+      {/* Diagnóstico */}
+      <div className={`${cardClass} border rounded-2xl p-6`}>
+        <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+          <Activity size={20} className="text-blue-500" />
+          Diagnóstico de Supabase
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Verificar conexión</p>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Comprueba la sincronización con Supabase
+              </p>
+            </div>
+            <button
+              onClick={runDiagnostic}
+              disabled={isRunningDiagnostic}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRunningDiagnostic ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                <>
+                  <Activity size={16} />
+                  Ejecutar
+                </>
+              )}
+            </button>
+          </div>
+
+          {diagnosticResults.length > 0 && (
+            <div className="space-y-2 mt-4">
+              {diagnosticResults.map((result, index) => (
+                <div
+                  key={index}
+                  className={`p-3 rounded-xl border-l-4 ${
+                    result.status === 'success'
+                      ? 'bg-green-500/10 border-green-500'
+                      : result.status === 'error'
+                      ? 'bg-red-500/10 border-red-500'
+                      : 'bg-blue-500/10 border-blue-500'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {result.status === 'success' && <CheckCircle2 size={16} className="text-green-500 flex-shrink-0 mt-0.5" />}
+                    {result.status === 'error' && <XCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />}
+                    {result.status === 'loading' && <Loader2 size={16} className="text-blue-500 animate-spin flex-shrink-0 mt-0.5" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{result.test}</p>
+                      <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {result.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
