@@ -139,6 +139,7 @@ export default function Schedule() {
                     const isStart = sessions.some((s) => s.startTime === time);
                     const isMiddle = sessions.some((s) => s.startTime < time && s.endTime > time);
                     const isRecess = time === '11:15';
+                    const isLastSlot = time === '14:45';
 
                     return (
                       <td key={dayIdx} className="p-1 h-14 relative align-top">
@@ -196,7 +197,7 @@ export default function Schedule() {
                             </div>
                           );
                         })}
-                        {!isStart && !isMiddle && !isRecess && (
+                        {!isStart && !isMiddle && !isRecess && !isLastSlot && (
                           <button
                             onClick={() => openAddModal(dayIdx, time)}
                             className={`w-full h-full rounded-lg opacity-0 hover:opacity-100 transition-opacity ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-blue-50'} flex items-center justify-center`}
@@ -255,8 +256,9 @@ export default function Schedule() {
 
         {/* Day Classes */}
         <div className="space-y-3">
-          {TIME_SLOTS.map((time) => {
+          {TIME_SLOTS.map((time, index) => {
             const isRecess = time === '11:15';
+            const isLastSlot = index === TIME_SLOTS.length - 1; // 14:45 es la última franja
             const classInSlot = mobileDayClasses.find((c) => c.startTime === time);
 
             if (isRecess) {
@@ -274,6 +276,11 @@ export default function Schedule() {
                   </div>
                 </div>
               );
+            }
+
+            // No mostrar botón de agregar en la última franja (14:45)
+            if (isLastSlot && !classInSlot) {
+              return null;
             }
 
             if (classInSlot) {
