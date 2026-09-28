@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useStore } from './store/useStore';
-import { syncFromSupabase } from './store/useStore';
 import Layout from './components/Layout';
 import WelcomeScreen from './components/WelcomeScreen';
 import Dashboard from './pages/Dashboard';
@@ -13,22 +12,8 @@ import Diagnostic from './pages/Diagnostic';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [dbReady, setDbReady] = useState(false);
+  const [dbReady, setDbReady] = useState(true);
   const { darkMode, subjects } = useStore();
-
-  // Sincronizar con Supabase al cargar la app
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        await syncFromSupabase();
-      } catch (error) {
-        console.warn('No se pudo sincronizar con Supabase, usando datos locales:', error);
-      } finally {
-        setDbReady(true);
-      }
-    };
-    initApp();
-  }, []);
 
   useEffect(() => {
     if (darkMode) {
