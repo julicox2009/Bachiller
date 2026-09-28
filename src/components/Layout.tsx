@@ -15,7 +15,6 @@ const navItems = [
   { id: 'assignments', label: 'Trabajos', icon: ClipboardList },
   { id: 'subjects', label: 'Asignaturas', icon: BookOpen },
   { id: 'settings', label: 'Ajustes', icon: Settings },
-  { id: 'diagnostic', label: 'Diagnóstico', icon: Settings },
 ];
 
 export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
