@@ -75,7 +75,7 @@ export const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 export const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 
 export const TIME_SLOTS = [
-  '08:15', '09:15', '10:15', '11:15', '11:45', '12:45', '13:45'
+  '08:15', '09:15', '10:15', '11:15', '11:45', '12:45', '13:45', '14:45'
 ];
 
 export const PRIORITY_CONFIG = {
